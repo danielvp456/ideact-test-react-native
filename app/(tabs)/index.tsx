@@ -12,7 +12,6 @@ function Home({ navigation }: any){
       try {
         const response = await fetch(`https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=spain&limit=10&api_key=c19c47264b0dfd0973d63aa54cb6788c&format=json`);
         const data = await response.json();
-        console.log(data);
         setTracks(data.tracks.track);
         setLoading(false);
       } catch (error) {
@@ -29,7 +28,7 @@ function Home({ navigation }: any){
     <View style={styles.container}>
       <Text style={styles.title}>  Hello Home </Text>
       <TouchableOpacity style={styles.button} accessibilityLabel='Learn much more about this jej' onPress={() => navigation.navigate('profile')}>
-        <Text style={styles.buttonText}> Learn more </Text>
+        <Text style={styles.buttonText}> Mi Perfil </Text>
       </TouchableOpacity>
 
       {loading ? (
@@ -38,7 +37,7 @@ function Home({ navigation }: any){
         <FlatList
           data={tracks}
           keyExtractor={(item) => item.url}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <View style={styles.trackContainer}>
               <Image
                 source={{ uri: item.image[0]['#text'] }}
@@ -49,7 +48,7 @@ function Home({ navigation }: any){
                 <Text style={styles.trackArtist}>{item.artist.name}</Text>
                 <Text style={styles.trackDuration}>Duration: {item.duration}</Text>
                 <Text style={styles.trackListeners}>Listeners: {item.listeners}</Text>
-                <TouchableOpacity style={styles.playButton} onPress={() => navigation.navigate('trackDetails', {item})}>
+                <TouchableOpacity style={styles.playButton} onPress={() => navigation.navigate('trackDetails', { item, tracks, index })}>
                   <Text style={styles.playButtonText}>Play</Text>
                 </TouchableOpacity>
               </View>

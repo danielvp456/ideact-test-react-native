@@ -5,24 +5,25 @@ import { FontAwesome } from 'react-native-vector-icons';
 import Slider from '@react-native-assets/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TrackDetails = ({ route }) => {
-    const { item } = route.params;
+const TrackDetails = ({ route, navigation }) => {
+    const { item, tracks, index } = route.params;
+    const [currentTrack, setCurrentTrack] = useState(item);
     const [isPlaying, setIsPlaying] = useState(false);
     const [sound, setSound] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [playbackStatus, setPlaybackStatus] = useState(null);
 
     useEffect(() => {
-        loadSound();
+        loadSound(currentTrack);
 
         return () => {
             if (sound) {
                 sound.unloadAsync();
             }
         };
-    }, []);
+    }, [currentTrack]);
 
-    const loadSound = async () => {
+    const loadSound = async (track) => {
         setIsLoading(true);
         try {
             const { sound: soundObject } = await Audio.Sound.createAsync(
@@ -45,7 +46,7 @@ const TrackDetails = ({ route }) => {
                     await sound.pauseAsync();
                 } else {
                     await sound.playAsync();
-                    await saveTrack(item);
+                    await saveTrack(currentTrack);
                 }
                 setIsPlaying(!isPlaying);
             } catch (error) {
@@ -58,6 +59,7 @@ const TrackDetails = ({ route }) => {
         try {
             let tracks = await AsyncStorage.getItem('playedTracks');
             tracks = tracks ? JSON.parse(tracks) : [];
+            tracks = tracks.filter(t => t.url !== track.url);
             tracks = [track, ...tracks].slice(0, 10);
             await AsyncStorage.setItem('playedTracks', JSON.stringify(tracks));
         } catch (error) {
@@ -79,11 +81,25 @@ const TrackDetails = ({ route }) => {
         }
     };
 
+    const handleNextTrack = () => {
+        if (index < tracks.length - 1) {
+            setCurrentTrack(tracks[index + 1]);
+            navigation.setParams({ item: tracks[index + 1], index: index + 1 });
+        }
+    };
+
+    const handlePreviousTrack = () => {
+        if (index > 0) {
+            setCurrentTrack(tracks[index - 1]);
+            navigation.setParams({ item: tracks[index - 1], index: index - 1 });
+        }
+    };
+
     return (
         <View style={styles.container}>
-            <Image source={{ uri: item.image[3]['#text'] }} style={styles.image} />
-            <Text style={styles.title}>{item.name}</Text>
-            <Text style={styles.artist}>{item.artist.name}</Text>
+            <Image source={{ uri: currentTrack.image[3]['#text'] }} style={styles.image} />
+            <Text style={styles.title}>{currentTrack.name}</Text>
+            <Text style={styles.artist}>{currentTrack.artist.name}</Text>
 
             {isLoading ? (
                 <ActivityIndicator size="large" color="#FFFFFF" />
@@ -100,13 +116,13 @@ const TrackDetails = ({ route }) => {
                         thumbTintColor="#FFFFFF"
                     />
                     <View style={styles.controls}>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={handlePreviousTrack}>
                             <FontAwesome name="backward" size={32} color="#FFFFFF" />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handlePlayPause}>
                             <FontAwesome name={isPlaying ? "pause" : "play"} size={32} color="#FFFFFF" />
                         </TouchableOpacity>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={handleNextTrack}>
                             <FontAwesome name="forward" size={32} color="#FFFFFF" />
                         </TouchableOpacity>
                     </View>
@@ -116,13 +132,18 @@ const TrackDetails = ({ route }) => {
             <View style={styles.infoContainer}>
                 <View style={styles.infoItem}>
                     <FontAwesome name="clock-o" size={24} color="#FFFFFF" />
-                    <Text style={styles.infoText}>{item.duration} sec</Text>
+                    <Text style={styles.infoText}>{currentTrack.duration} sec</Text>
                 </View>
                 <View style={styles.infoItem}>
                     <FontAwesome name="user" size={24} color="#FFFFFF" />
-                    <Text style={styles.infoText}>{item.listeners} listeners</Text>
+                    <Text style={styles.infoText}>{currentTrack.listeners} listeners</Text>
                 </View>
             </View>
+
+            <TouchableOpacity onPress={() => navigation.navigate('home')}>
+                <Text style={styles.homeButton}>Regresar al Home</Text>
+            </TouchableOpacity>
+
         </View>
     );
 };
@@ -177,6 +198,14 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#FFFFFF',
         marginLeft: 5,
+    },
+    homeButton: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        marginTop: 20,
+        backgroundColor: '#ff0000',
+        padding: 10,
+        borderRadius: 5,
     },
 });
 

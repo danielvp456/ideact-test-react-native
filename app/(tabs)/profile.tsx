@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, FlatList, Image } from 'react-native';
+import { View, StyleSheet, Text, FlatList, Image, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Profile = () => {
+const Profile = ({ navigation }: any) => {
     const [tracks, setTracks] = useState<any[]>([]);
 
     useEffect(() => {
@@ -18,6 +18,15 @@ const Profile = () => {
 
         fetchPlayedTracks();
     }, []);
+
+    const resetTracks = async () => {
+        try {
+            await AsyncStorage.removeItem('playedTracks');
+            setTracks([]);
+        } catch (error) {
+            console.error('Error resetting tracks:', error);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -38,6 +47,14 @@ const Profile = () => {
                     </View>
                 )}
             />
+
+            <TouchableOpacity onPress={resetTracks} style={styles.button}>
+                <Text style={styles.buttonText}>Resetear Lista</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('home')} style={styles.button}>
+                <Text style={styles.buttonText}>Volver a Home</Text>
+            </TouchableOpacity>
+
         </View>
     );
 };
@@ -45,40 +62,52 @@ const Profile = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#292929',
         padding: 20,
     },
     title: {
         fontSize: 24,
         color: '#FFFFFF',
+        fontWeight: 'bold',
         marginBottom: 20,
+        textAlign: 'center',
     },
     trackContainer: {
         flexDirection: 'row',
-        backgroundColor: '#1c1c1c',
-        marginVertical: 10,
-        borderRadius: 10,
-        width: '100%',
-        padding: 10,
         alignItems: 'center',
+        marginBottom: 20,
+        backgroundColor: '#3a3a3a',
+        padding: 10,
+        borderRadius: 5,
     },
     trackImage: {
         width: 50,
         height: 50,
         borderRadius: 5,
+        marginRight: 10,
     },
     trackInfo: {
-        marginLeft: 10,
+        flex: 1,
     },
     trackName: {
-        color: '#fff',
         fontSize: 18,
+        color: '#FFFFFF',
+        fontWeight: 'bold',
     },
     trackArtist: {
-        color: '#fff',
-        fontSize: 14,
+        fontSize: 16,
+        color: '#AAAAAA',
+    },
+    button: {
+        backgroundColor: '#FF0000',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginVertical: 10,
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        fontSize: 18,
     },
 });
 
