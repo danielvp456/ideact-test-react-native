@@ -4,29 +4,41 @@ import { Audio } from 'expo-av';
 import { FontAwesome } from 'react-native-vector-icons';
 import Slider from '@react-native-assets/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Font from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const TrackDetails = ({ route }) => {
-    const { item } = route.params;
+const TrackDetails = ({ route, navigation }) => {
+    const { item, tracks, index } = route.params;
+    const [currentTrack, setCurrentTrack] = useState(item);
     const [isPlaying, setIsPlaying] = useState(false);
     const [sound, setSound] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [playbackStatus, setPlaybackStatus] = useState(null);
+    const [fontsLoaded, setFontsLoaded] = useState(false);
 
     useEffect(() => {
-        loadSound();
+        const loadFonts = async () => {
+            await Font.loadAsync({
+                'Nunito-Bold': require('../../assets/fonts/Nunito-Bold.ttf'),
+            });
+            setFontsLoaded(true);
+        };
+
+        loadFonts();
+        loadSound(currentTrack);
 
         return () => {
             if (sound) {
                 sound.unloadAsync();
             }
         };
-    }, []);
+    }, [currentTrack]);
 
-    const loadSound = async () => {
+    const loadSound = async (track) => {
         setIsLoading(true);
         try {
             const { sound: soundObject } = await Audio.Sound.createAsync(
-                { uri: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // URL directa a un archivo MP3
+                { uri: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
                 { shouldPlay: false }
             );
             setSound(soundObject);
@@ -45,7 +57,7 @@ const TrackDetails = ({ route }) => {
                     await sound.pauseAsync();
                 } else {
                     await sound.playAsync();
-                    await saveTrack(item);
+                    await saveTrack(currentTrack);
                 }
                 setIsPlaying(!isPlaying);
             } catch (error) {
@@ -58,6 +70,7 @@ const TrackDetails = ({ route }) => {
         try {
             let tracks = await AsyncStorage.getItem('playedTracks');
             tracks = tracks ? JSON.parse(tracks) : [];
+            tracks = tracks.filter(t => t.url !== track.url);
             tracks = [track, ...tracks].slice(0, 10);
             await AsyncStorage.setItem('playedTracks', JSON.stringify(tracks));
         } catch (error) {
@@ -79,11 +92,47 @@ const TrackDetails = ({ route }) => {
         }
     };
 
+    const handleNextTrack = () => {
+        if (index < tracks.length - 1) {
+            setCurrentTrack(tracks[index + 1]);
+            navigation.setParams({ item: tracks[index + 1], index: index + 1 });
+        }
+    };
+
+    const handlePreviousTrack = () => {
+        if (index > 0) {
+            setCurrentTrack(tracks[index - 1]);
+            navigation.setParams({ item: tracks[index - 1], index: index - 1 });
+        }
+    };
+
+    const formatDuration = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    };
+
+    const formatListeners = (listeners) => {
+        if (listeners >= 1000000) {
+            return `${(listeners / 1000000).toFixed(1)}M`;
+        } else if (listeners >= 1000) {
+            return `${(listeners / 1000).toFixed(1)}K`;
+        }
+        return listeners.toString();
+    };
+
+    if (!fontsLoaded) {
+        return <Text style={{ color: '#fff' }}>Loading Fonts...</Text>;
+    }
+
     return (
-        <View style={styles.container}>
-            <Image source={{ uri: item.image[3]['#text'] }} style={styles.image} />
-            <Text style={styles.title}>{item.name}</Text>
-            <Text style={styles.artist}>{item.artist.name}</Text>
+        <LinearGradient
+            colors={['#00ff00', '#004B00', '#000900']}
+            style={styles.container}
+        >
+            <Image source={{ uri: currentTrack.image[3]['#text'] }} style={styles.image} />
+            <Text style={styles.title}>{currentTrack.name}</Text>
+            <Text style={styles.artist}>{currentTrack.artist.name}</Text>
 
             {isLoading ? (
                 <ActivityIndicator size="large" color="#FFFFFF" />
@@ -100,13 +149,13 @@ const TrackDetails = ({ route }) => {
                         thumbTintColor="#FFFFFF"
                     />
                     <View style={styles.controls}>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={handlePreviousTrack}>
                             <FontAwesome name="backward" size={32} color="#FFFFFF" />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handlePlayPause}>
                             <FontAwesome name={isPlaying ? "pause" : "play"} size={32} color="#FFFFFF" />
                         </TouchableOpacity>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={handleNextTrack}>
                             <FontAwesome name="forward" size={32} color="#FFFFFF" />
                         </TouchableOpacity>
                     </View>
@@ -116,14 +165,18 @@ const TrackDetails = ({ route }) => {
             <View style={styles.infoContainer}>
                 <View style={styles.infoItem}>
                     <FontAwesome name="clock-o" size={24} color="#FFFFFF" />
-                    <Text style={styles.infoText}>{item.duration} sec</Text>
+                    <Text style={styles.infoText}>{formatDuration(currentTrack.duration)}</Text>
                 </View>
                 <View style={styles.infoItem}>
                     <FontAwesome name="user" size={24} color="#FFFFFF" />
-                    <Text style={styles.infoText}>{item.listeners} listeners</Text>
+                    <Text style={styles.infoText}>{formatListeners(currentTrack.listeners)}</Text>
                 </View>
             </View>
-        </View>
+
+            <TouchableOpacity onPress={() => navigation.navigate('home')} style={styles.homeButton}>
+                <Text style={styles.homeButtonText}>Regresar al Home</Text>
+            </TouchableOpacity>
+        </LinearGradient>
     );
 };
 
@@ -132,7 +185,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#292929',
         padding: 20,
     },
     image: {
@@ -144,12 +196,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 30,
         color: '#FFFFFF',
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-Bold',
         marginBottom: 10,
     },
     artist: {
         fontSize: 20,
         color: '#FFFFFF',
+        fontFamily: 'Nunito-Bold',
         marginBottom: 20,
     },
     slider: {
@@ -168,6 +221,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         width: '80%',
+        marginVertical: 20,
     },
     infoItem: {
         flexDirection: 'row',
@@ -176,7 +230,20 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 18,
         color: '#FFFFFF',
+        fontFamily: 'Nunito-Bold',
         marginLeft: 5,
+    },
+    homeButton: {
+        backgroundColor: '#1DB954',
+        borderRadius: 25,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+    },
+    homeButtonText: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontFamily: 'Nunito-Bold',
     },
 });
 
