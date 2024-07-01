@@ -16,7 +16,7 @@ function Home({ navigation }: any) {
   useEffect(() => {
     const fetchTopTracks = async () => {
       try {
-        const response = await fetch(`https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=spain&limit=10&api_key=c19c47264b0dfd0973d63aa54cb6788c&format=json`);
+        const response = await fetch(`https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=spain&limit=50&api_key=c19c47264b0dfd0973d63aa54cb6788c&format=json`);
         const data = await response.json();
         setTracks(data.tracks.track);
         setLoading(false);

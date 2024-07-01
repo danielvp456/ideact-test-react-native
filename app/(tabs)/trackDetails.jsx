@@ -4,6 +4,8 @@ import { Audio } from 'expo-av';
 import { FontAwesome } from 'react-native-vector-icons';
 import Slider from '@react-native-assets/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Font from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const TrackDetails = ({ route, navigation }) => {
     const { item, tracks, index } = route.params;
@@ -12,8 +14,17 @@ const TrackDetails = ({ route, navigation }) => {
     const [sound, setSound] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [playbackStatus, setPlaybackStatus] = useState(null);
+    const [fontsLoaded, setFontsLoaded] = useState(false);
 
     useEffect(() => {
+        const loadFonts = async () => {
+            await Font.loadAsync({
+                'Nunito-Bold': require('../../assets/fonts/Nunito-Bold.ttf'),
+            });
+            setFontsLoaded(true);
+        };
+
+        loadFonts();
         loadSound(currentTrack);
 
         return () => {
@@ -27,7 +38,7 @@ const TrackDetails = ({ route, navigation }) => {
         setIsLoading(true);
         try {
             const { sound: soundObject } = await Audio.Sound.createAsync(
-                { uri: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // URL directa a un archivo MP3
+                { uri: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
                 { shouldPlay: false }
             );
             setSound(soundObject);
@@ -95,8 +106,30 @@ const TrackDetails = ({ route, navigation }) => {
         }
     };
 
+    const formatDuration = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    };
+
+    const formatListeners = (listeners) => {
+        if (listeners >= 1000000) {
+            return `${(listeners / 1000000).toFixed(1)}M`;
+        } else if (listeners >= 1000) {
+            return `${(listeners / 1000).toFixed(1)}K`;
+        }
+        return listeners.toString();
+    };
+
+    if (!fontsLoaded) {
+        return <Text style={{ color: '#fff' }}>Loading Fonts...</Text>;
+    }
+
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#00ff00', '#004B00', '#000900']}
+            style={styles.container}
+        >
             <Image source={{ uri: currentTrack.image[3]['#text'] }} style={styles.image} />
             <Text style={styles.title}>{currentTrack.name}</Text>
             <Text style={styles.artist}>{currentTrack.artist.name}</Text>
@@ -132,19 +165,18 @@ const TrackDetails = ({ route, navigation }) => {
             <View style={styles.infoContainer}>
                 <View style={styles.infoItem}>
                     <FontAwesome name="clock-o" size={24} color="#FFFFFF" />
-                    <Text style={styles.infoText}>{currentTrack.duration} sec</Text>
+                    <Text style={styles.infoText}>{formatDuration(currentTrack.duration)}</Text>
                 </View>
                 <View style={styles.infoItem}>
                     <FontAwesome name="user" size={24} color="#FFFFFF" />
-                    <Text style={styles.infoText}>{currentTrack.listeners} listeners</Text>
+                    <Text style={styles.infoText}>{formatListeners(currentTrack.listeners)}</Text>
                 </View>
             </View>
 
-            <TouchableOpacity onPress={() => navigation.navigate('home')}>
-                <Text style={styles.homeButton}>Regresar al Home</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('home')} style={styles.homeButton}>
+                <Text style={styles.homeButtonText}>Regresar al Home</Text>
             </TouchableOpacity>
-
-        </View>
+        </LinearGradient>
     );
 };
 
@@ -153,7 +185,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#292929',
         padding: 20,
     },
     image: {
@@ -165,12 +196,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 30,
         color: '#FFFFFF',
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-Bold',
         marginBottom: 10,
     },
     artist: {
         fontSize: 20,
         color: '#FFFFFF',
+        fontFamily: 'Nunito-Bold',
         marginBottom: 20,
     },
     slider: {
@@ -189,6 +221,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         width: '80%',
+        marginVertical: 20,
     },
     infoItem: {
         flexDirection: 'row',
@@ -197,15 +230,20 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 18,
         color: '#FFFFFF',
+        fontFamily: 'Nunito-Bold',
         marginLeft: 5,
     },
     homeButton: {
+        backgroundColor: '#1DB954',
+        borderRadius: 25,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+    },
+    homeButtonText: {
         color: '#FFFFFF',
         fontSize: 18,
-        marginTop: 20,
-        backgroundColor: '#ff0000',
-        padding: 10,
-        borderRadius: 5,
+        fontFamily: 'Nunito-Bold',
     },
 });
 
