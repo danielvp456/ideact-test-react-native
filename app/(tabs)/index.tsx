@@ -28,7 +28,7 @@ function Home({ navigation }: any){
   return (
     <View style={styles.container}>
       <Text style={styles.title}>  Hello Home </Text>
-      <TouchableOpacity style={styles.button} accessibilityLabel='Learn much more about this jej' onPress={() => { Alert.alert("Button clicked"); }}>
+      <TouchableOpacity style={styles.button} accessibilityLabel='Learn much more about this jej' onPress={() => navigation.navigate('profile')}>
         <Text style={styles.buttonText}> Learn more </Text>
       </TouchableOpacity>
 

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } fr
 import { Audio } from 'expo-av';
 import { FontAwesome } from 'react-native-vector-icons';
 import Slider from '@react-native-assets/slider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TrackDetails = ({ route }) => {
     const { item } = route.params;
@@ -44,11 +45,23 @@ const TrackDetails = ({ route }) => {
                     await sound.pauseAsync();
                 } else {
                     await sound.playAsync();
+                    await saveTrack(item);
                 }
                 setIsPlaying(!isPlaying);
             } catch (error) {
                 console.error('Error playing/pausing sound:', error);
             }
+        }
+    };
+
+    const saveTrack = async (track) => {
+        try {
+            let tracks = await AsyncStorage.getItem('playedTracks');
+            tracks = tracks ? JSON.parse(tracks) : [];
+            tracks = [track, ...tracks].slice(0, 10);
+            await AsyncStorage.setItem('playedTracks', JSON.stringify(tracks));
+        } catch (error) {
+            console.error('Error saving track:', error);
         }
     };
 

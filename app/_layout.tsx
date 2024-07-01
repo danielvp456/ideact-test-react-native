@@ -11,6 +11,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 import Home from './(tabs)/index';
 import TrackDetails from './(tabs)/trackDetails';
+import Profile from './(tabs)/profile';
 import NotFoundScreen from './+not-found';
 
 
@@ -41,6 +42,7 @@ export default function RootLayout() {
       <Stack.Navigator>
         <Stack.Screen name="home" component={Home} options={{ headerShown: false }} />
         <Stack.Screen name="trackDetails" component={TrackDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="profile" component={Profile} options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" component={NotFoundScreen} />
       </Stack.Navigator>
     </NavigationContainer>
