@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, Image, TouchableOpacity, Alert, FlatList,Dimens
 
 const { width } = Dimensions.get('window');
 
-const Home = () => {
+function Home({ navigation }: any){
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +49,7 @@ const Home = () => {
                 <Text style={styles.trackArtist}>{item.artist.name}</Text>
                 <Text style={styles.trackDuration}>Duration: {item.duration}</Text>
                 <Text style={styles.trackListeners}>Listeners: {item.listeners}</Text>
-                <TouchableOpacity style={styles.playButton} onPress={() => { Alert.alert("Playing song"); }}>
+                <TouchableOpacity style={styles.playButton} onPress={() => navigation.navigate('trackDetails', {item})}>
                   <Text style={styles.playButtonText}>Play</Text>
                 </TouchableOpacity>
               </View>
