@@ -50,7 +50,7 @@ function Home({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Hello Home</Text>
+        <Text style={styles.title}>Ideact Test</Text>
       </View>
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('profile')}>
         <Text style={styles.buttonText}>Mi Perfil</Text>
